@@ -20,4 +20,21 @@ example .babelrc:
 }
 ```
 
+code:
+```js
+Vue.component('hello-world', {
+  data: () => ({
+    text: 'Hello World!'
+  }),
+  render () {
+    return (
+      <div>
+        <input type="text" v-model={this.text} />
+        {this.text}
+      </div>
+    )
+  }
+})
+```
+
 Behaviour is similar to vue template's [v-model](https://vuejs.org/v2/api/#v-model).
