@@ -1,8 +1,10 @@
-const allowedModifiers = ['trim', 'number', 'lazy']
-const RANGE_TOKEN = '__r'
-const CHECKBOX_RADIO_TOKEN = '__c'
+'use strict'
 
-const htmlTags = [
+var allowedModifiers = ['trim', 'number', 'lazy']
+var RANGE_TOKEN = '__r'
+var CHECKBOX_RADIO_TOKEN = '__c'
+
+var htmlTags = [
   'html',
   'body',
   'base',
@@ -121,7 +123,7 @@ const htmlTags = [
   'tfoot'
 ]
 
-const svgTags = [
+var svgTags = [
   'svg',
   'animate',
   'circle',
@@ -154,15 +156,23 @@ const svgTags = [
   'view'
 ]
 
-const isReservedTag = tag => htmlTags.includes(tag) || svgTags.includes(tag)
+var isReservedTag = function isReservedTag(tag) {
+  return htmlTags.includes(tag) || svgTags.includes(tag)
+}
 
-const getExpression = (t, path) => (t.isStringLiteral(path.node.value) ? path.node.value : path.node.value.expression)
+var getExpression = function getExpression(t, path) {
+  return t.isStringLiteral(path.node.value) ? path.node.value : path.node.value.expression
+}
 
-const genValue = (t, model) => t.jSXAttribute(t.jSXIdentifier('domPropsValue'), t.jSXExpressionContainer(model))
+var genValue = function genValue(t, model) {
+  return t.jSXAttribute(t.jSXIdentifier('domPropsValue'), t.jSXExpressionContainer(model))
+}
 
-const genAssignmentCode = (t, model, assignment) => {
+var genAssignmentCode = function genAssignmentCode(t, model, assignment) {
   if (model.computed) {
-    const { object, property } = model
+    var object = model.object,
+      property = model.property
+
     return t.ExpressionStatement(
       t.CallExpression(t.MemberExpression(t.ThisExpression(), t.Identifier('$set')), [object, property, assignment])
     )
@@ -171,26 +181,27 @@ const genAssignmentCode = (t, model, assignment) => {
   }
 }
 
-const genListener = (t, event, body) =>
-  t.jSXAttribute(
-    t.jSXIdentifier(`on${event}`),
+var genListener = function genListener(t, event, body) {
+  return t.jSXAttribute(
+    t.jSXIdentifier('on' + event),
     t.jSXExpressionContainer(t.ArrowFunctionExpression([t.Identifier('$event')], t.BlockStatement(body)))
   )
+}
 
-const genSelectModel = (t, modelAttribute, model, modifier) => {
+var genSelectModel = function genSelectModel(t, modelAttribute, model, modifier) {
   if (modifier && modifier !== 'number') {
     throw modelAttribute.get('name').get('name').buildCodeFrameError('you can only use number modifier with <select/ >')
   }
 
-  const number = modifier === 'number'
+  var number = modifier === 'number'
 
-  const valueGetter = t.ConditionalExpression(
+  var valueGetter = t.ConditionalExpression(
     t.BinaryExpression('in', t.StringLiteral('_value'), t.Identifier('o')),
     t.MemberExpression(t.Identifier('o'), t.Identifier('_value')),
     t.MemberExpression(t.Identifier('o'), t.Identifier('value'))
   )
 
-  const selectedVal = t.CallExpression(
+  var selectedVal = t.CallExpression(
     t.MemberExpression(
       t.CallExpression(
         t.MemberExpression(
@@ -223,18 +234,18 @@ const genSelectModel = (t, modelAttribute, model, modifier) => {
     ]
   )
 
-  const assignment = t.ConditionalExpression(
+  var assignment = t.ConditionalExpression(
     t.MemberExpression(t.MemberExpression(t.Identifier('$event'), t.Identifier('target')), t.Identifier('multiple')),
     t.Identifier('$$selectedVal'),
     t.MemberExpression(t.Identifier('$$selectedVal'), t.NumericLiteral(0), true)
   )
 
-  const code = t.VariableDeclaration('const', [t.VariableDeclarator(t.Identifier('$$selectedVal'), selectedVal)])
+  var code = t.VariableDeclaration('const', [t.VariableDeclarator(t.Identifier('$$selectedVal'), selectedVal)])
 
   return [genValue(t, model), genListener(t, 'Change', [code, genAssignmentCode(t, model, assignment)])]
 }
 
-const genCheckboxModel = (t, modelAttribute, model, modifier, path) => {
+var genCheckboxModel = function genCheckboxModel(t, modelAttribute, model, modifier, path) {
   if (modifier && modifier !== 'number') {
     throw modelAttribute
       .get('name')
@@ -242,11 +253,11 @@ const genCheckboxModel = (t, modelAttribute, model, modifier, path) => {
       .buildCodeFrameError('you can only use number modifier with input[type="checkbox"]')
   }
 
-  let value = t.NullLiteral()
-  let trueValue = t.BooleanLiteral(true)
-  let falseValue = t.BooleanLiteral(false)
+  var value = t.NullLiteral()
+  var trueValue = t.BooleanLiteral(true)
+  var falseValue = t.BooleanLiteral(false)
 
-  path.get('attributes').forEach(path => {
+  path.get('attributes').forEach(function(path) {
     if (!path.node.name) {
       return
     }
@@ -263,7 +274,7 @@ const genCheckboxModel = (t, modelAttribute, model, modifier, path) => {
     }
   })
 
-  const checkedProp = t.JSXAttribute(
+  var checkedProp = t.JSXAttribute(
     t.JSXIdentifier('checked'),
     t.JSXExpressionContainer(
       t.ConditionalExpression(
@@ -280,8 +291,8 @@ const genCheckboxModel = (t, modelAttribute, model, modifier, path) => {
     )
   )
 
-  const handlerProp = t.JSXAttribute(
-    t.JSXIdentifier(`on${CHECKBOX_RADIO_TOKEN}`),
+  var handlerProp = t.JSXAttribute(
+    t.JSXIdentifier('on' + CHECKBOX_RADIO_TOKEN),
     t.JSXExpressionContainer(
       t.ArrowFunctionExpression(
         [t.Identifier('$event')],
@@ -374,7 +385,7 @@ const genCheckboxModel = (t, modelAttribute, model, modifier, path) => {
   return [checkedProp, handlerProp]
 }
 
-const genRadioModel = (t, modelAttribute, model, modifier, path) => {
+var genRadioModel = function genRadioModel(t, modelAttribute, model, modifier, path) {
   if (modifier && modifier !== 'number') {
     throw modelAttribute
       .get('name')
@@ -382,9 +393,9 @@ const genRadioModel = (t, modelAttribute, model, modifier, path) => {
       .buildCodeFrameError('you can only use number modifier with input[type="radio"]')
   }
 
-  let value = t.BooleanLiteral(true)
+  var value = t.BooleanLiteral(true)
 
-  path.get('attributes').forEach(path => {
+  path.get('attributes').forEach(function(path) {
     if (!path.node.name) {
       return
     }
@@ -395,15 +406,15 @@ const genRadioModel = (t, modelAttribute, model, modifier, path) => {
     }
   })
 
-  const checkedProp = t.JSXAttribute(
+  var checkedProp = t.JSXAttribute(
     t.JSXIdentifier('checked'),
     t.JSXExpressionContainer(
       t.CallExpression(t.MemberExpression(t.ThisExpression(), t.Identifier('_q')), [model, value])
     )
   )
 
-  const handlerProp = t.JSXAttribute(
-    t.JSXIdentifier(`on${CHECKBOX_RADIO_TOKEN}`),
+  var handlerProp = t.JSXAttribute(
+    t.JSXIdentifier('on' + CHECKBOX_RADIO_TOKEN),
     t.JSXExpressionContainer(
       t.ArrowFunctionExpression(
         [t.Identifier('$event')],
@@ -423,12 +434,12 @@ const genRadioModel = (t, modelAttribute, model, modifier, path) => {
   return [checkedProp, handlerProp]
 }
 
-const genDefaultModel = (t, modelAttribute, model, modifier, path, type) => {
-  const needCompositionGuard = modifier !== 'lazy' && type !== 'range'
+var genDefaultModel = function genDefaultModel(t, modelAttribute, model, modifier, path, type) {
+  var needCompositionGuard = modifier !== 'lazy' && type !== 'range'
 
-  const event = modifier === 'lazy' ? 'Change' : type === 'range' ? RANGE_TOKEN : 'Input'
+  var event = modifier === 'lazy' ? 'Change' : type === 'range' ? RANGE_TOKEN : 'Input'
 
-  let valueExpression = t.MemberExpression(
+  var valueExpression = t.MemberExpression(
     t.MemberExpression(t.Identifier('$event'), t.Identifier('target')),
     t.Identifier('value')
   )
@@ -439,7 +450,7 @@ const genDefaultModel = (t, modelAttribute, model, modifier, path, type) => {
     valueExpression = t.CallExpression(t.MemberExpression(t.ThisExpression(), t.Identifier('_n')), [valueExpression])
   }
 
-  let code = genAssignmentCode(t, model, valueExpression)
+  var code = genAssignmentCode(t, model, valueExpression)
 
   if (needCompositionGuard) {
     code = t.BlockStatement([
@@ -453,14 +464,14 @@ const genDefaultModel = (t, modelAttribute, model, modifier, path, type) => {
     code = t.BlockStatement([code])
   }
 
-  const valueProp = t.JSXAttribute(t.JSXIdentifier('value'), t.JSXExpressionContainer(model))
+  var valueProp = t.JSXAttribute(t.JSXIdentifier('value'), t.JSXExpressionContainer(model))
 
-  const handlerProp = t.JSXAttribute(
-    t.JSXIdentifier(`on${event}`),
+  var handlerProp = t.JSXAttribute(
+    t.JSXIdentifier('on' + event),
     t.JSXExpressionContainer(t.ArrowFunctionExpression([t.Identifier('$event')], code))
   )
 
-  const props = [valueProp, handlerProp]
+  var props = [valueProp, handlerProp]
 
   if (modifier === 'trim' || modifier === 'number') {
     props.push(
@@ -479,9 +490,9 @@ const genDefaultModel = (t, modelAttribute, model, modifier, path, type) => {
   return props
 }
 
-const genComponentModel = (t, modelAttribute, model, modifier, path, type) => {
-  const baseValueExpression = t.Identifier('$$v')
-  let valueExpression = baseValueExpression
+var genComponentModel = function genComponentModel(t, modelAttribute, model, modifier, path, type) {
+  var baseValueExpression = t.Identifier('$$v')
+  var valueExpression = baseValueExpression
 
   if (modifier === 'trim') {
     valueExpression = t.CallExpression(t.MemberExpression(valueExpression, t.Identifier('trim')), [])
@@ -489,29 +500,31 @@ const genComponentModel = (t, modelAttribute, model, modifier, path, type) => {
     valueExpression = t.CallExpression(t.MemberExpression(t.ThisExpression(), t.Identifier('_n')), [valueExpression])
   }
 
-  const assignment = genAssignmentCode(t, model, valueExpression)
+  var assignment = genAssignmentCode(t, model, valueExpression)
 
-  const valueProp = t.JSXAttribute(t.JSXIdentifier('value'), t.JSXExpressionContainer(model))
+  var valueProp = t.JSXAttribute(t.JSXIdentifier('value'), t.JSXExpressionContainer(model))
 
-  const handlerProp = t.JSXAttribute(
-    t.JSXIdentifier(`onChange`),
+  var handlerProp = t.JSXAttribute(
+    t.JSXIdentifier('onChange'),
     t.JSXExpressionContainer(t.ArrowFunctionExpression([baseValueExpression], t.BlockStatement([assignment])))
   )
 
   return [valueProp, handlerProp]
 }
 
-export default ({ types: t }) => {
+module.exports = function(_ref) {
+  var t = _ref.types
+
   return {
     visitor: {
-      JSXOpeningElement(path) {
-        let model = null
-        let modifier = null
-        let modelAttribute = null
-        let type = null
-        let dynamicTypePath = null
+      JSXOpeningElement: function JSXOpeningElement(path) {
+        var model = null
+        var modifier = null
+        var modelAttribute = null
+        var type = null
+        var dynamicTypePath = null
 
-        path.get('attributes').forEach(path => {
+        path.get('attributes').forEach(function(path) {
           if (!path.node.name) {
             return
           }
@@ -536,7 +549,7 @@ export default ({ types: t }) => {
               throw path
                 .get('name')
                 .get('name')
-                .buildCodeFrameError(`v-model does not support "${path.node.name.name.name}" modifier`)
+                .buildCodeFrameError('v-model does not support "' + path.node.name.name.name + '" modifier')
             }
 
             modifier = path.node.name.name.name
@@ -568,13 +581,13 @@ export default ({ types: t }) => {
           return
         }
 
-        const tag = path.node.name.name
+        var tag = path.node.name.name
 
         if (tag === 'input' && dynamicTypePath) {
           throw dynamicTypePath.buildCodeFrameError('you can not use dynamic type with v-model')
         }
 
-        let replacement = null
+        var replacement = null
 
         if (tag === 'select') {
           replacement = genSelectModel(t, modelAttribute, model, modifier)
