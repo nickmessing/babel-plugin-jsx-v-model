@@ -157,7 +157,7 @@ var svgTags = [
 ]
 
 var isReservedTag = function isReservedTag(tag) {
-  return htmlTags.includes(tag) || svgTags.includes(tag)
+  return ~htmlTags.indexOf(tag) || ~svgTags.indexOf(tag)
 }
 
 var getExpression = function getExpression(t, path) {
@@ -455,7 +455,10 @@ var genDefaultModel = function genDefaultModel(t, modelAttribute, model, modifie
   if (needCompositionGuard) {
     code = t.BlockStatement([
       t.IfStatement(
-        t.MemberExpression(t.MemberExpression(t.ThisExpression(), t.Identifier('target')), t.Identifier('composing')),
+        t.MemberExpression(
+          t.MemberExpression(t.Identifier('$event'), t.Identifier('target')),
+          t.Identifier('composing')
+        ),
         t.ReturnStatement(null)
       ),
       code
@@ -464,7 +467,7 @@ var genDefaultModel = function genDefaultModel(t, modelAttribute, model, modifie
     code = t.BlockStatement([code])
   }
 
-  var valueProp = t.JSXAttribute(t.JSXIdentifier('value'), t.JSXExpressionContainer(model))
+  var valueProp = t.JSXAttribute(t.jSXIdentifier('domPropsValue'), t.JSXExpressionContainer(model))
 
   var handlerProp = t.JSXAttribute(
     t.JSXIdentifier('on' + event),
@@ -502,7 +505,7 @@ var genComponentModel = function genComponentModel(t, modelAttribute, model, mod
 
   var assignment = genAssignmentCode(t, model, valueExpression)
 
-  var valueProp = t.JSXAttribute(t.JSXIdentifier('value'), t.JSXExpressionContainer(model))
+  var valueProp = t.JSXAttribute(t.jSXIdentifier('domPropsValue'), t.JSXExpressionContainer(model))
 
   var handlerProp = t.JSXAttribute(
     t.JSXIdentifier('onChange'),
@@ -512,10 +515,11 @@ var genComponentModel = function genComponentModel(t, modelAttribute, model, mod
   return [valueProp, handlerProp]
 }
 
-module.exports = function(_ref) {
-  var t = _ref.types
+module.exports = function(babel) {
+  var t = babel.types
 
   return {
+    inherits: require('babel-plugin-syntax-jsx'),
     visitor: {
       JSXOpeningElement: function JSXOpeningElement(path) {
         var model = null
@@ -536,6 +540,7 @@ module.exports = function(_ref) {
               dynamicTypePath = path.get('value')
             }
           }
+          /* istanbul ignore else */
           if (t.isJSXIdentifier(path.node.name)) {
             if (path.node.name.name !== 'v-model') {
               return
@@ -545,7 +550,7 @@ module.exports = function(_ref) {
               return
             }
 
-            if (!allowedModifiers.includes(path.node.name.name.name)) {
+            if (!~allowedModifiers.indexOf(path.node.name.name.name)) {
               throw path
                 .get('name')
                 .get('name')
@@ -599,6 +604,8 @@ module.exports = function(_ref) {
           replacement = genDefaultModel(t, modelAttribute, model, modifier, path, type)
         } else if (!isReservedTag(tag)) {
           replacement = genComponentModel(t, modelAttribute, model, modifier, path)
+        } else {
+          throw path.buildCodeFrameError('you can not use "' + tag + '" with v-model')
         }
 
         modelAttribute.replaceWithMultiple(replacement)
