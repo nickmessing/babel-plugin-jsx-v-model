@@ -76,7 +76,7 @@ testError(
 `
 )
 testError(
-  'select[v-model:trim]',
+  'Error: select[v-model:trim]',
   `
   <select
     v-model:trim={a.b}
@@ -84,7 +84,7 @@ testError(
 `
 )
 testError(
-  'input[type="checkbox",v-model:trim]',
+  'Error: input[type="checkbox",v-model:trim]',
   `
   <input
     type="checkbox"
@@ -93,11 +93,20 @@ testError(
 `
 )
 testError(
-  'input[type="radio",v-model:trim]',
+  'Error: input[type="radio",v-model:trim]',
   `
   <input
     type="radio"
     v-model:trim={a.b}
+  />
+`
+)
+testError(
+  'Error: input[type="file",v-model]',
+  `
+  <input
+    type="file"
+    v-model={a.b}
   />
 `
 )

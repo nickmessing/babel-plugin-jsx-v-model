@@ -378,7 +378,7 @@ module.exports = function(babel) {
         var modifier = null
         var modelAttribute = null
         var type = null
-        var dynamicTypePath = null
+        var typePath = null
 
         path.get('attributes').forEach(function(path) {
           if (!path.node.name) {
@@ -387,10 +387,7 @@ module.exports = function(babel) {
 
           if (path.node.name.name === 'type') {
             type = path.node.value.value
-
-            if (t.isJSXExpressionContainer(path.node.value)) {
-              dynamicTypePath = path.get('value')
-            }
+            typePath = path.get('value')
           }
           /* istanbul ignore else */
           if (t.isJSXIdentifier(path.node.name)) {
@@ -440,8 +437,11 @@ module.exports = function(babel) {
 
         var tag = path.node.name.name
 
-        if (tag === 'input' && dynamicTypePath) {
-          throw dynamicTypePath.buildCodeFrameError('you can not use dynamic type with v-model')
+        if (tag === 'input' && typePath && t.isJSXExpressionContainer(typePath.node)) {
+          throw typePath.buildCodeFrameError('you can not use dynamic type with v-model')
+        }
+        if (tag === 'input' && type === 'file') {
+          throw typePath.buildCodeFrameError('you can not use "file" type with v-model')
         }
 
         var replacement = null
