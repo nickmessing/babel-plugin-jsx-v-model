@@ -460,7 +460,22 @@ module.exports = function(babel) {
           throw path.buildCodeFrameError('you can not use "' + tag + '" with v-model')
         }
 
-        modelAttribute.replaceWithMultiple(replacement)
+        modelAttribute.replaceWithMultiple([
+          ...replacement,
+          t.JSXSpreadAttribute(
+            t.ObjectExpression([
+              t.ObjectProperty(
+                t.Identifier('directives'),
+                t.ArrayExpression([
+                  t.ObjectExpression([
+                    t.ObjectProperty(t.Identifier('name'), t.StringLiteral('model')),
+                    t.ObjectProperty(t.Identifier('value'), model)
+                  ])
+                ])
+              )
+            ])
+          )
+        ])
       }
     }
   }
