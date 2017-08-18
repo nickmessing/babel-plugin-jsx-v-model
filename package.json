@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-jsx-v-model",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "JSX v-model transform",
   "main": "index.js",
   "scripts": {
