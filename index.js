@@ -357,7 +357,7 @@ var genComponentModel = function genComponentModel(t, modelAttribute, model, mod
 
   var assignment = genAssignmentCode(t, model, valueExpression)
 
-  var valueProp = t.JSXAttribute(t.jSXIdentifier('domPropsValue'), t.JSXExpressionContainer(model))
+  var valueProp = t.JSXAttribute(t.jSXIdentifier('value'), t.JSXExpressionContainer(model))
 
   var handlerProp = t.JSXAttribute(
     t.JSXIdentifier('onInput'),
