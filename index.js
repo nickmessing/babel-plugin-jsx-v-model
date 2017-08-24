@@ -360,7 +360,7 @@ var genComponentModel = function genComponentModel(t, modelAttribute, model, mod
   var valueProp = t.JSXAttribute(t.jSXIdentifier('domPropsValue'), t.JSXExpressionContainer(model))
 
   var handlerProp = t.JSXAttribute(
-    t.JSXIdentifier('onChange'),
+    t.JSXIdentifier('onInput'),
     t.JSXExpressionContainer(t.ArrowFunctionExpression([baseValueExpression], t.BlockStatement([assignment])))
   )
 
