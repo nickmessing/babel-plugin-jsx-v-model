@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/nickmessing/babel-plugin-jsx-v-model.svg?branch=master)](https://travis-ci.org/nickmessing/babel-plugin-jsx-v-model)
 
+## DEPRECATED: Check https://github.com/vuejs/jsx instead
+
 ## JSX v-model for Vue JSX
 
 This babel plugin adds some syntactic sugar to JSX.
